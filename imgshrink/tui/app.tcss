@@ -1,0 +1,29 @@
+Screen { background: #0f1117; }
+Header { background: #161a23; color: #7dd3fc; }
+Footer { background: #161a23; }
+#body { height: 1fr; }
+#side { width: 40; border: round #2a3142; padding: 0 1; background: #131722; }
+#main { width: 1fr; }
+.section { color: #7dd3fc; text-style: bold; margin-top: 1; }
+.field { color: #94a3b8; margin-top: 1; }
+.row { height: 3; }
+.row Label { width: 1fr; padding-top: 1; color: #cbd5e1; }
+#addbar { height: 3; }
+#addbar Input { width: 1fr; }
+#addbar Button { margin-left: 1; min-width: 12; }
+#files { height: 1fr; border: round #2a3142; background: #131722; }
+#lower { height: 14; }
+#preview-box { width: 40; border: round #2a3142; background: #0b0d12; padding: 0 1; }
+#preview { width: 100%; height: 1fr; }
+#info { height: 3; color: #94a3b8; }
+#log-box { width: 1fr; border: round #2a3142; background: #131722; }
+#progress { margin: 0 1; height: 1; }
+#stats { height: 1; padding: 0 1; color: #a7f3d0; }
+BrowseScreen { align: center middle; }
+#browse-box { width: 80%; height: 80%; border: round #7dd3fc; background: #131722; padding: 1; }
+#browse-title { color: #7dd3fc; text-style: bold; }
+#tree { height: 1fr; }
+#browse-btns { height: 3; }
+#browse-btns Button { margin-right: 1; }
+Select { margin-bottom: 0; }
+Input.-invalid { border: tall red; }
