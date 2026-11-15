@@ -99,3 +99,29 @@ By default results are written next to the original with a suffix
 (`photo.min.webp`, or `photo.min.jpg` when the format changes). Name collisions
 get `-1`, `-2`, … appended. Files that would not get smaller are reported as
 `already optimal` and left alone.
+
+## Contributing
+
+Contributions are welcome — issues, bug reports, and pull requests alike.
+If you're sending a change, keep it focused and explain *why* it's needed.
+
+```bash
+git clone https://github.com/faridhafizh/image-shrinker.git
+cd image-shrinker
+python -m venv .venv
+```
+
+Activate the virtual environment (`.\.venv\Scripts\activate` on Windows,
+`source .venv/bin/activate` elsewhere), then install the dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Run it with `python main.py` for the TUI, or `python main.py --cli <paths>` for
+headless mode. Please test both paths before opening a pull request.
+
+## License
+
+Released under the [MIT License](LICENSE) — free to use, modify, and distribute,
+including commercially, as long as the copyright notice is kept.
