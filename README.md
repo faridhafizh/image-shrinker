@@ -50,8 +50,11 @@ that fits under a target file size.
 ```bash
 git clone https://github.com/faridhafizh/image-shrinker.git
 cd image-shrinker
-pip install -r requirements.txt
+pip install .
 ```
+
+That installs the `imgshrink` command. For an editable install with the dev
+tools (pytest, ruff), see [Contributing](#-contributing).
 
 > [!NOTE]
 > AVIF output needs a Pillow build with AVIF support. The app detects this
@@ -64,23 +67,25 @@ pip install -r requirements.txt
 ### Terminal UI
 
 ```bash
-python main.py
+imgshrink
 ```
 
 Start with files or folders already queued:
 
 ```bash
-python main.py ~/Pictures/holiday ~/Desktop/logo.png
+imgshrink ~/Pictures/holiday ~/Desktop/logo.png
 ```
+
+`python -m imgshrink` and the old `python main.py` entry point behave the same.
 
 ### Headless CLI
 
 ```bash
 # Fixed quality, convert to WebP, cap longest side at 2048 px
-python main.py --cli ~/Pictures --format webp --quality 80 --max-dim 2048
+imgshrink --cli ~/Pictures --format webp --quality 80 --max-dim 2048
 
 # Target mode: fit under 500 KB, write to ./optimized
-python main.py --cli ~/Pictures/hero.jpg --target 500 --out ./optimized
+imgshrink --cli ~/Pictures/hero.jpg --target 500 --out ./optimized
 ```
 
 ### CLI options
@@ -150,7 +155,8 @@ untouched.
 ## 🤝 Contributing
 
 Contributions are welcome — issues, bug reports and pull requests alike.
-Keep changes focused and explain *why* they're needed.
+Keep changes focused, explain *why* they're needed, and see
+[CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
 
 <details>
 <summary><b>Development setup</b></summary>
@@ -171,16 +177,47 @@ Activate the virtual environment:
 source .venv/bin/activate
 ```
 
-Install dependencies:
+Install the project with its dev tools:
 
 ```bash
-pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
 
-Run `python main.py` for the TUI or `python main.py --cli <paths>` for headless
-mode. Please test **both** paths before opening a pull request.
+That gives you the `imgshrink` command, plus `pytest` and `ruff`.
 
 </details>
+
+<details>
+<summary><b>Project layout</b></summary>
+
+| Path | Responsibility |
+| --- | --- |
+| `imgshrink/imaging.py` | Pixel work: load, resize, encode, target-size search |
+| `imgshrink/constants.py` | Format tables and `human()` byte formatting |
+| `imgshrink/config.py` | `Config`, presets, reading/writing settings |
+| `imgshrink/paths.py` | Pasted-path parsing, folder walking, open-folder |
+| `imgshrink/pipeline.py` | One file in → one file out, skip rules, CSV reports |
+| `imgshrink/cli.py` | Flags, headless mode, entry points |
+| `imgshrink/tui/app.py` | The Textual app: queue, preview, progress, actions |
+| `imgshrink/tui/settings.py` | The settings form |
+| `imgshrink/tui/widgets.py` | Terminal image preview |
+| `imgshrink/tui/screens.py` | Folder picker modal |
+| `imgshrink/tui/app.tcss` | Colours and spacing |
+
+The engine (`imaging.py`, `pipeline.py`) never imports Textual and the TUI never
+parses `argv`, so the two halves can be changed and tested independently.
+
+</details>
+
+### Checks
+
+```bash
+pytest
+ruff check .
+```
+
+The suite is headless and drives the TUI through Textual's test driver. Please
+test both the TUI and `--cli` paths before opening a pull request.
 
 ---
 
