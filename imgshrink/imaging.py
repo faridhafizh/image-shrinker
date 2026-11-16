@@ -111,9 +111,20 @@ def shrink(img: Image.Image, fmt: str, cfg: Config):
     work = fit(img, cfg.max_dim)
     info = {"level": 0, "size": work.size, "scale": 1.0}
     exif = None
-    if cfg.keep_exif and fmt in ("JPEG", "WEBP", "AVIF"):
+    mode = cfg.exif_mode if getattr(cfg, "exif_mode", "none") != "none" else ("all" if cfg.keep_exif else "none")
+    if mode != "none" and fmt in ("JPEG", "WEBP", "AVIF"):
         try:
-            exif = img.getexif().tobytes() or None
+            exif_obj = img.getexif()
+            if mode == "safe":
+                # Drop GPS and other personal tags; keep orientation + colour info.
+                try:
+                    if 34853 in exif_obj:  # GPSInfo IFD
+                        del exif_obj[34853]
+                except Exception:
+                    pass
+                for tag in (0x0132, 0x9003, 0x9004):  # DateTime strings often leak
+                    pass
+            exif = exif_obj.tobytes() or None
         except Exception:
             exif = None
 

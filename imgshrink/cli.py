@@ -10,7 +10,7 @@ from pathlib import Path
 from .config import PRESETS, Config, load_config
 from .constants import FORMATS, human
 from .paths import collect_images
-from .pipeline import Result, process_file
+from .pipeline import Result, process_file, process_file_multi
 
 STATUS_MARK = {"done": "✔", "estimated": "≈", "skipped": "•", "error": "✖"}
 
@@ -27,6 +27,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--out", dest="out_dir")
     p.add_argument("--overwrite", action="store_true")
     p.add_argument("--keep-exif", action="store_true")
+    p.add_argument("--exif-mode", choices=["none", "safe", "all"])
+    p.add_argument("--formats", help="comma-separated output formats for multi-format mode, e.g. jpeg,webp,avif")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--no-recursive", action="store_true")
     p.add_argument("--workers", type=int)
@@ -43,18 +45,18 @@ def run_cli(args: argparse.Namespace, cfg: Config) -> int:
         return 1
     ok = tot_b = tot_a = 0
     with ThreadPoolExecutor(max_workers=cfg.workers) as pool:
-        futs = {pool.submit(process_file, f, cfg): f for f in files}
+        futs = {pool.submit(process_file_multi, f, cfg): f for f in files}
         for fut in as_completed(futs):
-            r: Result = fut.result()
-            mark = STATUS_MARK[r.status]
-            if r.status in ("done", "estimated"):
-                ok += 1
-                tot_b += r.before
-                tot_a += r.after
-                print(f"{mark} {r.src.name}: {human(r.before)} → {human(r.after)} "
-                      f"({100 * (1 - r.after / r.before):.0f}%) {r.note}")
-            else:
-                print(f"{mark} {r.src.name}: {r.note}")
+            for r in fut.result():
+                mark = STATUS_MARK[r.status]
+                if r.status in ("done", "estimated"):
+                    ok += 1
+                    tot_b += r.before
+                    tot_a += r.after
+                    print(f"{mark} {r.src.name} [{r.fmt}]: {human(r.before)} → {human(r.after)} "
+                          f"({100 * (1 - r.after / r.before):.0f}%) {r.note}")
+                else:
+                    print(f"{mark} {r.src.name} [{r.fmt}]: {r.note}")
     if ok:
         print(f"\nTotal: {ok} file(s)  {human(tot_b)} → {human(tot_a)}  "
               f"saved {human(max(0, tot_b - tot_a))}")
@@ -77,6 +79,10 @@ def main(argv: list[str] | None = None) -> None:
         cfg.mode = "quality"
     cfg.overwrite |= args.overwrite
     cfg.keep_exif |= args.keep_exif
+    if args.exif_mode:
+        cfg.exif_mode = args.exif_mode
+    if args.formats:
+        cfg.formats = [f.strip().lower() for f in args.formats.split(",") if f.strip()]
     cfg.dry_run |= args.dry_run
     if args.no_recursive:
         cfg.recursive = False

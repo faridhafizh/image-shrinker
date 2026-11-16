@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
 PRESETS: dict[str, dict] = {
@@ -28,6 +28,8 @@ class Config:
     suffix: str = ".min"
     overwrite: bool = False
     keep_exif: bool = False
+    exif_mode: str = "none"   # none | safe | all  (overrides keep_exif when set)
+    formats: list[str] = field(default_factory=list)  # multi-format output; empty = use fmt
     dry_run: bool = False
     workers: int = max(1, min(4, os.cpu_count() or 2))
     recursive: bool = True

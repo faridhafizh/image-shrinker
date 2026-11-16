@@ -34,8 +34,8 @@ that fits under a target file size.
 | 🖥️ **Terminal UI** | File queue, live preview, progress bar and log |
 | 🎯 **Two modes** | `quality` — encode at a quality you choose<br>`target` — hit a max file size (binary-searches quality, then resolution) |
 | 🎛️ **Presets** | Web (WebP) · Email (≤ 500 KB) · Social (1080) · Thumbnail · Lossless PNG |
-| 🔄 **Formats** | Keep the original, or convert to JPEG / WebP / PNG / AVIF |
-| 🏷️ **Metadata** | Optional EXIF retention, orientation respected |
+| 🔄 **Formats** | Keep the original, or convert to JPEG / WebP / PNG / AVIF; multi-format output (one input → several formats) |
+| 🏷️ **Metadata** | Selective EXIF stripping: keep all, keep safe (drop GPS/personal), or strip all; orientation respected |
 | 🛡️ **Safety** | Dry-run estimates, skips already-optimal files, never overwrites unless asked |
 | ⚡ **Parallel** | Multi-threaded with a configurable worker count |
 | 📊 **Reports** | CSV export and one-key "open output folder" |
@@ -99,7 +99,9 @@ imgshrink --cli ~/Pictures/hero.jpg --target 500 --out ./optimized
 | `--max-dim` | Longest side in pixels, `0` for no limit |
 | `--out` | Output folder (default: next to the original) |
 | `--overwrite` | Overwrite the original when the format is unchanged |
-| `--keep-exif` | Preserve EXIF metadata |
+| `--keep-exif` | Preserve EXIF metadata (legacy; prefer `--exif-mode`) |
+| `--exif-mode` | `none`, `safe` (drop GPS/personal) or `all` |
+| `--formats` | Comma-separated output formats for multi-format mode (e.g. `jpeg,webp,avif`) |
 | `--dry-run` | Estimate results without writing files |
 | `--no-recursive` | Don't descend into subfolders |
 | `--workers` | Number of parallel workers |

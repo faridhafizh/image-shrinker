@@ -57,6 +57,13 @@ class SettingsPanel(VerticalScroll):
         with Horizontal(classes="row"):
             yield Label("Keep EXIF metadata")
             yield Switch(c.keep_exif, id="keep_exif")
+        yield Label("EXIF mode", classes="field")
+        yield Select([("none — strip all", "none"),
+                      ("safe — drop GPS/personal", "safe"),
+                      ("all — keep everything", "all")],
+                     value=c.exif_mode, allow_blank=False, id="exif_mode")
+        yield Label("Multi-formats (comma, blank = single)", classes="field")
+        yield Input(",".join(c.formats), placeholder="jpeg,webp,avif", id="formats")
         with Horizontal(classes="row"):
             yield Label("Include subfolders")
             yield Switch(c.recursive, id="recursive")
@@ -85,6 +92,9 @@ class SettingsPanel(VerticalScroll):
         c.suffix = self.query_one("#suffix", Input).value or ".min"
         c.overwrite = self.query_one("#overwrite", Switch).value
         c.keep_exif = self.query_one("#keep_exif", Switch).value
+        c.exif_mode = str(self.query_one("#exif_mode", Select).value)
+        raw_fmts = self.query_one("#formats", Input).value.strip()
+        c.formats = [f.strip().lower() for f in raw_fmts.split(",") if f.strip()]
         c.recursive = self.query_one("#recursive", Switch).value
         c.dry_run = self.query_one("#dry_run", Switch).value
         c.workers = self._int("workers", 1, 32, c.workers)

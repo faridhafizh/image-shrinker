@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import csv
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Literal
 
@@ -27,6 +27,7 @@ class Result:
     out_px: tuple[int, int] | None = None
     in_px: tuple[int, int] | None = None
     reached: bool = True
+    fmt: str = ""
 
 
 def resolve_format(src: Path, cfg: Config) -> str:
@@ -54,10 +55,12 @@ def destination(src: Path, cfg: Config, fmt: str) -> Path:
     return dest
 
 
-def process_file(src: Path, cfg: Config) -> Result:
-    """Shrink a single image. Never raises: errors are reported on the Result."""
+def _process_one(src: Path, cfg: Config, fmt: str) -> Result:
+    """Shrink a single image to an explicit output format."""
     t0 = time.perf_counter()
-    res = Result(src=src)
+    res = Result(src=src, fmt=fmt)
+    # Work on a copy so the caller's cfg is not mutated.
+    cfg = replace(cfg, fmt="keep" if fmt.lower() == "keep" else fmt.lower())
     try:
         res.before = src.stat().st_size
     except OSError as exc:
@@ -69,18 +72,21 @@ def process_file(src: Path, cfg: Config) -> Result:
         res.status, res.note = "error", f"cannot open: {exc}"
         return res
     try:
-        fmt = resolve_format(src, cfg)
+        if fmt.lower() == "keep":
+            target_fmt = resolve_format(src, cfg)
+        else:
+            target_fmt = fmt.upper()
         res.in_px = img.size
-        data, info = shrink(img, fmt, cfg)
-        dest = destination(src, cfg, fmt)
-        same_fmt = SRC_FMT.get(src.suffix.lower()) == fmt
+        data, info = shrink(img, target_fmt, cfg)
+        dest = destination(src, cfg, target_fmt)
+        same_fmt = SRC_FMT.get(src.suffix.lower()) == target_fmt
         res.after, res.dest, res.out_px = len(data), dest, info["size"]
 
         bits = []
         lvl = info["level"]
-        if fmt == "PNG" and 0 < lvl < 256:
+        if target_fmt == "PNG" and 0 < lvl < 256:
             bits.append(f"{lvl} colours")
-        elif fmt != "PNG" and lvl:
+        elif target_fmt != "PNG" and lvl:
             bits.append(f"q{lvl}")
         if info["size"] != img.size:
             bits.append(f"{info['size'][0]}×{info['size'][1]}px")
@@ -104,11 +110,22 @@ def process_file(src: Path, cfg: Config) -> Result:
     return res
 
 
+def process_file(src: Path, cfg: Config) -> Result:
+    """Shrink a single image (single format, honouring cfg.fmt / 'keep')."""
+    return _process_one(src, cfg, cfg.fmt)
+
+
+def process_file_multi(src: Path, cfg: Config) -> list[Result]:
+    """Shrink one image to every format in cfg.formats (or [cfg.fmt] if empty)."""
+    fmts = cfg.formats if cfg.formats else [cfg.fmt]
+    return [_process_one(src, cfg, f) for f in fmts]
+
+
 def save_report(results: list[Result], path: Path) -> None:
     with path.open("w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)
         w.writerow(["source", "output", "status", "before_bytes", "after_bytes",
-                    "saved_pct", "note"])
+                    "saved_pct", "note", "format"])
         for r in results:
             pct = f"{100 * (1 - r.after / r.before):.1f}" if r.before and r.after else ""
-            w.writerow([r.src, r.dest or "", r.status, r.before, r.after, pct, r.note])
+            w.writerow([r.src, r.dest or "", r.status, r.before, r.after, pct, r.note, r.fmt])
